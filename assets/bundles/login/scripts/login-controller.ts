@@ -1,6 +1,7 @@
 import { _decorator, Button, Color, Component } from 'cc';
 import { LoginModel } from './login-model';
 import { LoginUI } from './login-ui';
+import { SceneManager } from 'db://assets/scripts/framework/scene-manager';
 
 const { ccclass, property } = _decorator;
 
@@ -34,7 +35,8 @@ export class LoginController extends Component {
 
         try {
             await this.model.login();
-            this.UI.setMessage('Login successfull', Color.GREEN);
+
+            await SceneManager.loadBundle('lobby', 'Lobby');
         } catch (error) {
         } finally {
             this.UI.setLoading(false);

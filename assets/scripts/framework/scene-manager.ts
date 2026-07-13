@@ -13,7 +13,7 @@ export class SceneManager {
     ): Promise<void> {
         if (this.isLoading) {
             console.warn(
-                `[SceneManager] Đang load dở "${this.currentBundleName ?? '...'}", bỏ qua request load "${bundleName}"`,
+                `[SceneManager] Loading... "${this.currentBundleName ?? '...'}", passed "${bundleName}"`,
             );
             return;
         }
@@ -45,7 +45,7 @@ export class SceneManager {
             }
         } catch (err) {
             console.error(
-                `[SceneManager] Load bundle "${bundleName}" thất bại:`,
+                `[SceneManager] Load bundle "${bundleName}" failed:`,
                 err,
             );
             throw err;
@@ -77,7 +77,7 @@ export class SceneManager {
         if (bundle) {
             bundle.releaseAll();
             assetManager.removeBundle(bundle);
-            console.log(`[SceneManager] Đã release bundle "${bundleName}"`);
+            console.log(`[SceneManager] Released bundle "${bundleName}"`);
         }
     }
 
