@@ -8,7 +8,6 @@ export class PopupController extends Component {
     @property(Node) private container: Node | null = null;
 
     private currentContent: Node | null = null;
-    private onCloseContent: ((node: Node) => void) | null = null;
 
     public open(
         content: Node | null,
