@@ -36,14 +36,11 @@ export class LoginController extends Component {
         try {
             await this.model.login();
 
+            this.UI.setLoading(false);
+
             await SceneManager.loadBundle('lobby', 'Lobby');
         } catch (error) {
-        } finally {
             this.UI.setLoading(false);
         }
-    }
-
-    protected onDestroy(): void {
-        this.UI.button.node?.off(Button.EventType.CLICK);
     }
 }
