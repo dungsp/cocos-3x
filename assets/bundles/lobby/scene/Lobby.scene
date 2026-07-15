@@ -852,9 +852,8 @@
     "videoPlaceholder": {
       "__id__": 9
     },
-    "uiCamera": {
-      "__id__": 4
-    },
+    "designWidth": 720,
+    "designHeight": 1280,
     "livekitUrl": "wss://cocos-yt9r3slt.livekit.cloud",
     "tokenEndpoint": "http://localhost:3001/get-token",
     "roomName": "default-room",

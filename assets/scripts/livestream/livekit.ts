@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, UITransform, view } from 'cc';
+import { _decorator, Component, Node, UITransform } from 'cc';
 import {
     Room,
     RoomEvent,
@@ -10,95 +10,114 @@ import {
 
 const { ccclass, property } = _decorator;
 
-/**
- * Component quản lý kết nối LiveKit + hiển thị video overlay đè lên canvas Cocos.
- * Gắn component này vào 1 Node bất kỳ trong scene (thường là 1 Node quản lý/manager).
- *
- * Cách dùng:
- * 1. Kéo Node placeholder (nơi video sẽ hiển thị) vào field `videoPlaceholder`.
- * 2. Điền `livekitUrl`, `tokenEndpoint`, `roomName`, `identity`.
- * 3. Gọi `connect()` sau khi user tương tác (vd bấm nút "Vào phòng live"),
- *    vì trình duyệt chặn autoplay audio/video nếu chưa có tương tác.
- */
 @ccclass('LiveKitStreamManager')
 export class LiveKitStreamManager extends Component {
     @property(Node)
-    public videoPlaceholder: Node | null = null; // Node quyết định vị trí + kích thước video
+    public videoPlaceholder: Node | null = null;
 
-    @property({ tooltip: 'vd: wss://your-project.livekit.cloud' })
-    public livekitUrl: string = '';
+    @property({
+        tooltip: 'Chiều rộng thiết kế của game',
+    })
+    public designWidth = 720;
 
-    @property({ tooltip: 'Backend endpoint trả về JSON { token: string }' })
-    public tokenEndpoint: string = '';
+    @property({
+        tooltip: 'Chiều cao thiết kế của game',
+    })
+    public designHeight = 1280;
+
+    @property({
+        tooltip: 'Ví dụ: wss://your-project.livekit.cloud',
+    })
+    public livekitUrl = '';
+
+    @property({
+        tooltip: 'Backend endpoint trả về JSON { token: string }',
+    })
+    public tokenEndpoint = '';
 
     @property
-    public roomName: string = 'default-room';
+    public roomName = 'default-room';
 
     @property
-    public identity: string = '';
+    public identity = '';
 
-    @property({ tooltip: 'Tự bật camera của người chơi (publish) khi connect' })
-    public autoPublishCamera: boolean = false;
+    @property({
+        tooltip: 'Tự bật camera của người chơi khi connect',
+    })
+    public autoPublishCamera = false;
 
-    @property({ tooltip: 'Tự bật mic của người chơi (publish) khi connect' })
-    public autoPublishMic: boolean = false;
+    @property({
+        tooltip: 'Tự bật micro của người chơi khi connect',
+    })
+    public autoPublishMic = false;
 
-    @property({ tooltip: 'id của thẻ canvas Cocos trong index.html' })
-    public canvasElementId: string = 'GameCanvas';
+    @property({
+        tooltip: 'ID của thẻ canvas Cocos',
+    })
+    public canvasElementId = 'GameCanvas';
 
     private room: Room | null = null;
-    private videoElements: Map<string, HTMLVideoElement> = new Map();
+
+    private videoElements = new Map<string, HTMLVideoElement>();
+
     private canvasEl: HTMLCanvasElement | null = null;
 
-    onLoad() {
+    protected onLoad(): void {
         this.canvasEl = document.getElementById(
             this.canvasElementId,
-        ) as HTMLCanvasElement;
+        ) as HTMLCanvasElement | null;
+
         if (!this.canvasEl) {
             console.warn(
-                `[LiveKitStreamManager] Không tìm thấy canvas #${this.canvasElementId}, ` +
-                    `kiểm tra lại id trong build-templates/web-mobile/index.html`,
+                `[LiveKitStreamManager] Không tìm thấy canvas #${this.canvasElementId}`,
             );
         }
     }
 
-    /** Gọi hàm này sau khi user đã tương tác (click/tap) để tránh bị chặn autoplay. */
+    /**
+     * Nên gọi sau khi người dùng click/tap để tránh trình duyệt chặn autoplay.
+     */
     public async connect(): Promise<void> {
         if (!this.livekitUrl || !this.tokenEndpoint) {
             console.error(
                 '[LiveKitStreamManager] Chưa điền livekitUrl hoặc tokenEndpoint',
             );
+
             return;
         }
 
         try {
             const token = await this.fetchToken();
+
             this.room = new Room();
 
             this.room.on(
                 RoomEvent.TrackSubscribed,
                 this.onTrackSubscribed.bind(this),
             );
+
             this.room.on(
                 RoomEvent.TrackUnsubscribed,
                 this.onTrackUnsubscribed.bind(this),
             );
-            this.room.on(
-                RoomEvent.Disconnected,
-                this.onDisconnected.bind(this),
-            );
-            // Quan trọng: TrackSubscribed KHÔNG bắn cho track do chính mình publish.
-            // Muốn tự xem lại camera/mic của mình thì phải lắng nghe riêng sự kiện này.
+
             this.room.on(
                 RoomEvent.LocalTrackPublished,
                 this.onLocalTrackPublished.bind(this),
             );
+
             this.room.on(
                 RoomEvent.LocalTrackUnpublished,
                 this.onLocalTrackUnpublished.bind(this),
             );
 
+            this.room.on(
+                RoomEvent.Disconnected,
+                this.onDisconnected.bind(this),
+            );
+
             await this.room.connect(this.livekitUrl, token);
+
             console.log(
                 '[LiveKitStreamManager] Đã kết nối phòng:',
                 this.roomName,
@@ -107,11 +126,12 @@ export class LiveKitStreamManager extends Component {
             if (this.autoPublishCamera) {
                 await this.room.localParticipant.setCameraEnabled(true);
             }
+
             if (this.autoPublishMic) {
                 await this.room.localParticipant.setMicrophoneEnabled(true);
             }
-        } catch (err) {
-            console.error('[LiveKitStreamManager] Lỗi khi connect:', err);
+        } catch (error) {
+            console.error('[LiveKitStreamManager] Lỗi khi connect:', error);
         }
     }
 
@@ -120,21 +140,28 @@ export class LiveKitStreamManager extends Component {
             await this.room.disconnect();
             this.room = null;
         }
+
         this.clearAllVideoElements();
     }
 
     private async fetchToken(): Promise<string> {
         const url =
-            `${this.tokenEndpoint}?room=${encodeURIComponent(this.roomName)}` +
+            `${this.tokenEndpoint}` +
+            `?room=${encodeURIComponent(this.roomName)}` +
             `&identity=${encodeURIComponent(this.identity)}`;
-        const res = await fetch(url);
-        if (!res.ok) {
-            throw new Error(`Không lấy được token, status: ${res.status}`);
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`Không lấy được token, status: ${response.status}`);
         }
-        const data = await res.json();
+
+        const data = await response.json();
+
         if (!data.token) {
             throw new Error('Response backend không có field "token"');
         }
+
         return data.token as string;
     }
 
@@ -142,82 +169,145 @@ export class LiveKitStreamManager extends Component {
         track: RemoteTrack,
         _publication: RemoteTrackPublication,
         participant: RemoteParticipant,
-    ) {
+    ): void {
         if (track.kind === Track.Kind.Audio) {
-            track.attach(); // audio không cần overlay vị trí, cứ để browser tự phát
+            track.attach();
             return;
         }
 
-        if (track.kind !== Track.Kind.Video) return;
+        if (track.kind !== Track.Kind.Video) {
+            return;
+        }
+
+        const identity = participant.identity;
+
+        this.removeVideoElement(identity);
 
         const videoEl = track.attach() as HTMLVideoElement;
-        videoEl.id = `livekit-video-${participant.identity}`;
-        videoEl.style.position = 'absolute';
-        videoEl.style.objectFit = 'cover';
-        videoEl.style.pointerEvents = 'none'; // không chặn touch/click của game
-        videoEl.style.zIndex = '10';
+
+        this.setupVideoElement(videoEl, `livekit-video-${identity}`);
+
         document.body.appendChild(videoEl);
 
-        this.videoElements.set(participant.identity, videoEl);
+        this.videoElements.set(identity, videoEl);
+
+        this.syncVideoPosition(videoEl);
     }
 
     private onTrackUnsubscribed(
         track: RemoteTrack,
         _publication: RemoteTrackPublication,
         participant: RemoteParticipant,
-    ) {
-        track.detach().forEach((el) => el.remove());
+    ): void {
+        track.detach().forEach((element) => {
+            element.remove();
+        });
+
         this.videoElements.delete(participant.identity);
     }
 
     /**
-     * Bắn ra khi CHÍNH MÌNH publish 1 track (camera/mic) thành công.
-     * Dùng để tự hiển thị lại camera của mình (self-preview), giống như "xem trước" khi livestream.
-     * Nếu bạn KHÔNG cần tự xem lại camera của mình (chỉ cần người khác xem), có thể bỏ qua video ở đây.
+     * Self-preview của camera local.
      */
-    private onLocalTrackPublished(publication: any) {
+    private onLocalTrackPublished(publication: any): void {
         const track = publication.track;
-        if (!track) return;
+
+        if (!track) {
+            return;
+        }
 
         if (track.kind === Track.Kind.Audio) {
-            return; // không cần tự phát lại mic của mình (sẽ bị vọng/echo)
+            return;
         }
-        if (track.kind !== Track.Kind.Video) return;
+
+        if (track.kind !== Track.Kind.Video) {
+            return;
+        }
 
         const identity = this.room?.localParticipant.identity ?? 'local';
+
+        this.removeVideoElement(identity);
+
         const videoEl = track.attach() as HTMLVideoElement;
-        videoEl.id = `livekit-video-${identity}`;
-        videoEl.muted = true; // local video luôn mute để tránh vọng âm
-        videoEl.style.position = 'absolute';
-        videoEl.style.objectFit = 'cover';
-        videoEl.style.pointerEvents = 'none';
-        videoEl.style.zIndex = '10';
+
+        videoEl.muted = true;
+
+        this.setupVideoElement(videoEl, `livekit-video-${identity}`);
+
         document.body.appendChild(videoEl);
 
         this.videoElements.set(identity, videoEl);
+
+        this.syncVideoPosition(videoEl);
     }
 
-    private onLocalTrackUnpublished(publication: any) {
+    private onLocalTrackUnpublished(publication: any): void {
         const identity = this.room?.localParticipant.identity ?? 'local';
+
         if (publication.track) {
-            publication.track
-                .detach()
-                .forEach((el: HTMLVideoElement) => el.remove());
+            publication.track.detach().forEach((element: HTMLVideoElement) => {
+                element.remove();
+            });
         }
+
         this.videoElements.delete(identity);
     }
 
-    private onDisconnected() {
+    private setupVideoElement(videoEl: HTMLVideoElement, id: string): void {
+        videoEl.id = id;
+
+        /*
+         * getBoundingClientRect() trả tọa độ theo viewport,
+         * vì vậy position fixed sẽ khớp trực tiếp.
+         */
+        videoEl.style.position = 'fixed';
+
+        videoEl.style.objectFit = 'cover';
+        videoEl.style.pointerEvents = 'none';
+        videoEl.style.zIndex = '10';
+
+        videoEl.style.margin = '0';
+        videoEl.style.padding = '0';
+        videoEl.style.border = 'none';
+
+        /*
+         * Tránh video hiện sai vị trí trong frame đầu tiên.
+         */
+        videoEl.style.left = '0px';
+        videoEl.style.top = '0px';
+        videoEl.style.width = '0px';
+        videoEl.style.height = '0px';
+
+        videoEl.setAttribute('playsinline', 'true');
+        videoEl.setAttribute('webkit-playsinline', 'true');
+    }
+
+    private onDisconnected(): void {
         console.log('[LiveKitStreamManager] Đã ngắt kết nối');
+
         this.clearAllVideoElements();
     }
 
-    private clearAllVideoElements() {
-        this.videoElements.forEach((el) => el.remove());
+    private removeVideoElement(identity: string): void {
+        const oldVideo = this.videoElements.get(identity);
+
+        if (!oldVideo) {
+            return;
+        }
+
+        oldVideo.remove();
+        this.videoElements.delete(identity);
+    }
+
+    private clearAllVideoElements(): void {
+        this.videoElements.forEach((videoEl) => {
+            videoEl.remove();
+        });
+
         this.videoElements.clear();
     }
 
-    update() {
+    protected update(): void {
         if (
             this.videoElements.size === 0 ||
             !this.videoPlaceholder ||
@@ -225,47 +315,126 @@ export class LiveKitStreamManager extends Component {
         ) {
             return;
         }
-        this.videoElements.forEach((el) => this.syncVideoPosition(el));
+
+        this.videoElements.forEach((videoEl) => {
+            this.syncVideoPosition(videoEl);
+        });
     }
 
     /**
-     * Đồng bộ vị trí + kích thước thẻ <video> theo Node placeholder mỗi frame.
+     * Đồng bộ vị trí Node Cocos với thẻ video HTML.
      *
-     * KHÔNG cần Camera.worldToScreen() ở đây: với 1 Node UI nằm dưới Canvas (screen-space
-     * overlay, trường hợp chuẩn cho UI 2D), world position của Node đã chính là toạ độ
-     * "design space" với gốc (0,0) ở góc DƯỚI-TRÁI của canvas thiết kế. Chỉ cần tự lật trục Y
-     * (world Y hướng lên, DOM Y hướng xuống) rồi scale theo tỉ lệ canvas thật/design là đủ.
+     * Canvas browser có thể rộng hơn vùng game 720 × 1280,
+     * tạo ra hai dải đen hai bên.
+     *
+     * Hàm này tính riêng vùng game thật và bỏ qua phần màu đen.
      */
-    private syncVideoPosition(videoEl: HTMLVideoElement) {
-        if (!this.videoPlaceholder || !this.canvasEl) return;
+    private syncVideoPosition(videoEl: HTMLVideoElement): void {
+        if (
+            !this.videoPlaceholder ||
+            !this.canvasEl ||
+            this.designWidth <= 0 ||
+            this.designHeight <= 0
+        ) {
+            return;
+        }
 
         const uiTransform = this.videoPlaceholder.getComponent(UITransform);
-        if (!uiTransform) return;
+
+        if (!uiTransform) {
+            return;
+        }
 
         const canvasRect = this.canvasEl.getBoundingClientRect();
-        const visibleSize = view.getVisibleSize();
+
+        /*
+         * Chỉ dùng một scale để không làm biến dạng game.
+         */
+        const gameScale = Math.min(
+            canvasRect.width / this.designWidth,
+            canvasRect.height / this.designHeight,
+        );
+
+        /*
+         * Kích thước vùng game thật trên browser.
+         */
+        const gameWidthPx = this.designWidth * gameScale;
+
+        const gameHeightPx = this.designHeight * gameScale;
+
+        /*
+         * Phần dư do letterbox:
+         *
+         * - Màn hình ngang: offsetX là hai dải đen hai bên.
+         * - Màn hình quá cao: offsetY là vùng dư trên dưới.
+         */
+        const offsetX = (canvasRect.width - gameWidthPx) / 2;
+
+        const offsetY = (canvasRect.height - gameHeightPx) / 2;
+
+        /*
+         * Tọa độ vùng game thật theo viewport browser.
+         */
+        const gameLeft = canvasRect.left + offsetX;
+
+        const gameTop = canvasRect.top + offsetY;
+
+        const gameRight = gameLeft + gameWidthPx;
+
+        const gameBottom = gameTop + gameHeightPx;
+
         const worldPos = this.videoPlaceholder.worldPosition;
 
-        const scaleX = canvasRect.width / visibleSize.width;
-        const scaleY = canvasRect.height / visibleSize.height;
+        const widthPx = uiTransform.width * gameScale;
 
-        const widthPx = uiTransform.width * scaleX;
-        const heightPx = uiTransform.height * scaleY;
+        const heightPx = uiTransform.height * gameScale;
 
-        // worldPos.x: giữ nguyên (trục X giống nhau giữa world và DOM)
-        // worldPos.y: lật lại vì world Y hướng lên, DOM Y hướng xuống
-        const screenYFromTop = visibleSize.height - worldPos.y;
+        /*
+         * Cocos:
+         * - Trục Y hướng lên.
+         *
+         * DOM:
+         * - Trục Y hướng xuống.
+         *
+         * Anchor:
+         * - left dùng anchorX.
+         * - top dùng phần đối xứng 1 - anchorY sau khi lật trục Y.
+         */
+        const leftPx =
+            gameLeft + worldPos.x * gameScale - widthPx * uiTransform.anchorX;
 
-        const leftPx = canvasRect.left + worldPos.x * scaleX - widthPx / 2;
-        const topPx = canvasRect.top + screenYFromTop * scaleY - heightPx / 2;
+        const topPx =
+            gameTop +
+            (this.designHeight - worldPos.y) * gameScale -
+            heightPx * (1 - uiTransform.anchorY);
 
         videoEl.style.left = `${leftPx}px`;
         videoEl.style.top = `${topPx}px`;
         videoEl.style.width = `${widthPx}px`;
         videoEl.style.height = `${heightPx}px`;
+
+        /*
+         * Cắt phần video tràn sang vùng đen.
+         */
+        const videoRight = leftPx + widthPx;
+        const videoBottom = topPx + heightPx;
+
+        const clipLeft = Math.max(0, gameLeft - leftPx);
+
+        const clipTop = Math.max(0, gameTop - topPx);
+
+        const clipRight = Math.max(0, videoRight - gameRight);
+
+        const clipBottom = Math.max(0, videoBottom - gameBottom);
+
+        videoEl.style.clipPath =
+            `inset(${clipTop}px ` +
+            `${clipRight}px ` +
+            `${clipBottom}px ` +
+            `${clipLeft}px)`;
     }
 
-    onDestroy() {
-        this.disconnect();
+    protected onDestroy(): void {
+        void this.disconnect();
     }
 }
