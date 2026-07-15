@@ -4,7 +4,8 @@
     "designResolution": {
       "height": 1280,
       "width": 720,
-      "fitHeight": true
+      "fitHeight": true,
+      "fitWidth": true
     }
   }
 }

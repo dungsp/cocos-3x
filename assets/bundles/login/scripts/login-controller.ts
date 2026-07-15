@@ -1,9 +1,19 @@
-import { _decorator, Button, Color, Component } from 'cc';
+import {
+    _decorator,
+    Button,
+    Color,
+    Component,
+    ResolutionPolicy,
+    view,
+} from 'cc';
+import { SceneManager } from 'db://assets/scripts/framework/scene-manager';
 import { LoginModel } from './login-model';
 import { LoginUI } from './login-ui';
-import { SceneManager } from 'db://assets/scripts/framework/scene-manager';
 
 const { ccclass, property } = _decorator;
+
+view.setDesignResolutionSize(720, 1280, ResolutionPolicy.SHOW_ALL);
+view.resizeWithBrowserSize(true);
 
 @ccclass('LoginController')
 export class LoginController extends Component {
