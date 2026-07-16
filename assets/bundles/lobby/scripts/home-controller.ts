@@ -1,5 +1,5 @@
 import { _decorator, Button, Component } from 'cc';
-import { LiveKitStreamManager } from '../../../scripts/livestream/livekit';
+import { LiveKitStreamManager } from '../../../scripts/livestream/livekit-manager';
 const { ccclass, property } = _decorator;
 
 @ccclass('HomeController')
@@ -20,8 +20,6 @@ export class HomeController extends Component {
 
         this.livekit.connect();
     }
-
-    update(deltaTime: number) {}
 
     protected onDestroy(): void {
         this.button.node?.off(Button.EventType.CLICK, this.onShow, this);

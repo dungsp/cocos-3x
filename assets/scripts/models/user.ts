@@ -4,6 +4,7 @@ export interface User {
     username: string;
     fullname: string;
     balance: number;
+    isHost: boolean;
 }
 
 export class UserSession {
@@ -16,6 +17,10 @@ export class UserSession {
 
     static getToken() {
         return this._token;
+    }
+
+    static setUser(user: User) {
+        this._user = user;
     }
 
     static getUser() {
