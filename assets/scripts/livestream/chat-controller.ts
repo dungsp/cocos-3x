@@ -47,7 +47,7 @@ export class LiveChatController extends Component {
 
     private onMessage(message: ChatMessage) {
         this.renderMsg(message);
-        this.trimMessages();
+        this.trimOldMessages();
         this.scrollToBottom();
     }
 
@@ -72,7 +72,7 @@ export class LiveChatController extends Component {
         this.content.addChild(item);
     }
 
-    private trimMessages() {
+    private trimOldMessages() {
         if (!this.content) return;
 
         const children = this.content.children;
