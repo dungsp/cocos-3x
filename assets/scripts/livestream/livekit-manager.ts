@@ -1,14 +1,15 @@
 import { _decorator, Component, Node, UITransform } from 'cc';
 import {
-    Room,
-    RoomEvent,
-    Track,
     RemoteParticipant,
     RemoteTrack,
     RemoteTrackPublication,
+    Room,
+    RoomEvent,
+    Track,
 } from 'livekit-client';
-import { StreamRole } from './stream-role';
 import { UserSession } from '../models/user';
+import { LiveSessionParams } from './live-params';
+import { StreamRole } from './stream-role';
 
 const { ccclass, property } = _decorator;
 
@@ -60,11 +61,12 @@ export class LiveKitStreamManager extends Component {
 
         if (!this.canvasEl) {
             console.warn(
-                `[LiveKitStreamManager] Không tìm thấy canvas #${this.canvasElementId}`,
+                `[LiveKitStreamManager] Not found Canvas: #${this.canvasElementId}`,
             );
         }
 
         this.resolveRoleFromUserSession();
+        this.applySessiontParams();
     }
 
     private resolveRoleFromUserSession() {
@@ -77,6 +79,10 @@ export class LiveKitStreamManager extends Component {
         }
 
         this.role = user?.isHost ? StreamRole.HOST : StreamRole.VIEWER;
+    }
+
+    private applySessiontParams() {
+        this.roomName = LiveSessionParams.roomName;
     }
 
     public get isHost() {
@@ -413,6 +419,7 @@ export class LiveKitStreamManager extends Component {
     }
 
     protected onDestroy(): void {
+        LiveSessionParams.clear();
         void this.disconnect();
     }
 }

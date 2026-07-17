@@ -1,3 +1,5 @@
+import { User } from 'db://assets/scripts/models/user';
+
 export class LoginModel {
     username: string;
     password: string;
@@ -6,10 +8,14 @@ export class LoginModel {
         return !!this.username && !!this.password;
     }
 
-    login(): Promise<boolean> {
+    login(): Promise<User> {
         return new Promise((res) => {
             setTimeout(() => {
-                res(true);
+                res({
+                    userId: new Date() + '',
+                    isHost: this.username.includes('a'),
+                    username: this.username,
+                });
             }, 2000);
         });
     }

@@ -1,9 +1,6 @@
 export interface User {
     userId: string;
-    avatar: string;
     username: string;
-    fullname: string;
-    balance: number;
     isHost: boolean;
 }
 
@@ -27,11 +24,11 @@ export class UserSession {
         return this._user;
     }
 
-    static updateBalance(balance: number) {
-        if (!this._user) return;
+    // static updateBalance(balance: number) {
+    //     if (!this._user) return;
 
-        this._user.balance = balance;
-    }
+    //     this._user.balance = balance;
+    // }
 
     static clear() {
         this._token = null;
