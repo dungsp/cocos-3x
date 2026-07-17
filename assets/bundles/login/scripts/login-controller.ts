@@ -9,6 +9,7 @@ import {
 import { SceneManager } from 'db://assets/scripts/framework/scene-manager';
 import { LoginModel } from './login-model';
 import { LoginUI } from './login-ui';
+import { UserSession } from 'db://assets/scripts/models/user';
 
 const { ccclass, property } = _decorator;
 
@@ -44,9 +45,11 @@ export class LoginController extends Component {
         this.UI.setMessage('Connecting to server...', Color.CYAN);
 
         try {
-            await this.model.login();
+            const user = await this.model.login();
 
             this.UI.setLoading(false);
+
+            UserSession.setUser(user);
 
             await SceneManager.loadBundle('lobby', 'Lobby');
         } catch (error) {
