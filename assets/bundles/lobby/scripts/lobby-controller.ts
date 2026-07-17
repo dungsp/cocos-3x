@@ -1,6 +1,6 @@
 import { _decorator, Button, Component } from 'cc';
 import { SceneManager } from 'db://assets/scripts/framework/scene-manager';
-import { LiveSessionParams } from 'db://assets/scripts/livestream/live-params';
+import { LiveSessionParams } from 'db://assets/bundles/livestream/live-params';
 import { UserSession } from 'db://assets/scripts/models/user';
 import { LobbyUI } from './lobby-ui';
 const { ccclass, property } = _decorator;

@@ -7,7 +7,7 @@ import {
     RoomEvent,
     Track,
 } from 'livekit-client';
-import { UserSession } from '../models/user';
+import { UserSession } from '../../scripts/models/user';
 import { LiveSessionParams } from './live-params';
 import { StreamRole } from './stream-role';
 
@@ -19,36 +19,22 @@ export class LiveKitStreamManager extends Component {
     public videoPlaceholder: Node | null = null;
 
     @property()
-    public designWidth = 720;
-
-    @property()
-    public designHeight = 1280;
-
-    @property()
-    public livekitUrl = '';
-
-    @property()
-    public tokenEndpoint = '';
-
-    @property
-    public roomName = 'default-room';
-
-    @property
-    public identity = '';
-
-    @property()
-    public autoPublishCamera = false;
-
-    @property()
-    public autoPublishMic = false;
-
-    @property()
     public canvasElementId = 'GameCanvas';
 
+    public designWidth = 720;
+    public designHeight = 1280;
+
+    public tokenEndpoint = 'http://localhost:3001/get-token';
+    public livekitUrl = 'wss://cocos-yt9r3slt.livekit.cloud';
+    public roomName = '';
+
+    public identity = '';
+
+    public autoPublishCamera = false;
+    public autoPublishMic = false;
+
     public room: Room | null = null;
-
     private videoElements = new Map<string, HTMLVideoElement>();
-
     private canvasEl: HTMLCanvasElement | null = null;
 
     private defaultRole: StreamRole = StreamRole.VIEWER;
@@ -79,6 +65,7 @@ export class LiveKitStreamManager extends Component {
         }
 
         this.role = user?.isHost ? StreamRole.HOST : StreamRole.VIEWER;
+        this.identity = user.username;
     }
 
     private applySessiontParams() {
