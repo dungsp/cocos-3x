@@ -149,7 +149,7 @@ export class LiveKitStreamManager extends Component {
             },
             body: JSON.stringify({
                 room: this.roomId,
-                name: 'Player',
+                name: user.username,
             }),
         });
 
