@@ -9,7 +9,6 @@ import {
 } from 'livekit-client';
 import { UserSession } from '../../scripts/models/user';
 import { LiveSessionParams } from './live-params';
-import { StreamRole } from './stream-role';
 
 const { ccclass, property } = _decorator;
 
@@ -26,7 +25,7 @@ export class LiveKitStreamManager extends Component {
 
     public tokenEndpoint = 'http://localhost:3001/get-token';
     public livekitUrl = 'wss://cocos-yt9r3slt.livekit.cloud';
-    public roomName = '';
+    public roomId = '';
 
     public identity = '';
 
@@ -36,9 +35,6 @@ export class LiveKitStreamManager extends Component {
     public room: Room | null = null;
     private videoElements = new Map<string, HTMLVideoElement>();
     private canvasEl: HTMLCanvasElement | null = null;
-
-    private defaultRole: StreamRole = StreamRole.VIEWER;
-    private role: StreamRole = StreamRole.VIEWER;
 
     protected onLoad(): void {
         this.canvasEl = document.getElementById(
@@ -60,24 +56,14 @@ export class LiveKitStreamManager extends Component {
 
         if (!user) {
             console.warn('Missing User information');
-            this.role = this.defaultRole;
             return;
         }
-
-        this.role = user?.isHost ? StreamRole.HOST : StreamRole.VIEWER;
         this.identity = user.username;
     }
 
     private applySessiontParams() {
-        this.roomName = LiveSessionParams.roomName;
-    }
-
-    public get isHost() {
-        return this.role === StreamRole.HOST;
-    }
-
-    public getRole() {
-        return this.role;
+        console.log('LiveSessionParams.roomName: ', LiveSessionParams.roomId);
+        this.roomId = LiveSessionParams.roomId;
     }
 
     public async connect(): Promise<void> {
@@ -121,12 +107,7 @@ export class LiveKitStreamManager extends Component {
 
             await this.room.connect(this.livekitUrl, token);
 
-            console.log(
-                '[LiveKitStreamManager] Room connected:',
-                this.roomName,
-                '- role:',
-                StreamRole[this.role],
-            );
+            console.log('[LiveKitStreamManager] Room connected:', this.roomId);
 
             // if (this.autoPublishCamera) {
             //     await this.room.localParticipant.setCameraEnabled(true);
@@ -150,12 +131,27 @@ export class LiveKitStreamManager extends Component {
     }
 
     private async fetchToken(): Promise<string> {
-        const url =
-            `${this.tokenEndpoint}` +
-            `?room=${encodeURIComponent(this.roomName)}` +
-            `&identity=${encodeURIComponent(this.identity)}`;
+        console.log({
+            roomId: this.roomId,
+            identity: this.identity,
+        });
+        const user = UserSession.getUser();
 
-        const response = await fetch(url);
+        if (!user) {
+            throw new Error('User chưa đăng nhập');
+        }
+
+        const response = await fetch('http://localhost:3001/get-token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': user.userId,
+            },
+            body: JSON.stringify({
+                room: this.roomId,
+                name: 'Player',
+            }),
+        });
 
         if (!response.ok) {
             throw new Error(
@@ -215,9 +211,6 @@ export class LiveKitStreamManager extends Component {
         this.videoElements.delete(participant.identity);
     }
 
-    /**
-     * Self-preview camera local.
-     */
     private onLocalTrackPublished(publication: any): void {
         const track = publication.track;
 

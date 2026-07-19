@@ -1,7 +1,7 @@
 export class LiveSessionParams {
-    public static roomName: string = '';
+    public static roomId: string = '';
 
     public static clear() {
-        this.roomName = '';
+        this.roomId = '';
     }
 }

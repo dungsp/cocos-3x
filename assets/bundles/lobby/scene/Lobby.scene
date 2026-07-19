@@ -52,7 +52,7 @@
     },
     "autoReleaseAssets": false,
     "_globals": {
-      "__id__": 46
+      "__id__": 45
     },
     "_id": "bd6e5166-d236-4b85-b31c-24e6c2af05c0"
   },
@@ -88,9 +88,6 @@
       },
       {
         "__id__": 44
-      },
-      {
-        "__id__": 45
       }
     ],
     "_prefab": null,
@@ -1771,28 +1768,6 @@
     "_id": "c5V1EV8IpMtrIvY1OE9t2u"
   },
   {
-    "__type__": "9f91e4eO11NoofTB5wmvesG",
-    "_name": "",
-    "_objFlags": 0,
-    "__editorExtras__": {},
-    "node": {
-      "__id__": 2
-    },
-    "_enabled": true,
-    "__prefab": null,
-    "videoPlaceholder": null,
-    "designWidth": 720,
-    "designHeight": 1280,
-    "livekitUrl": "wss://cocos-yt9r3slt.livekit.cloud",
-    "tokenEndpoint": "http://localhost:3001/get-token",
-    "roomName": "default-room",
-    "identity": "player-1",
-    "autoPublishCamera": true,
-    "autoPublishMic": true,
-    "canvasElementId": "GameCanvas",
-    "_id": "c6Azw/RGVBrI3b1T9DXQ9N"
-  },
-  {
     "__type__": "cfc36c6w2FF+qztQtTg15qd",
     "_name": "",
     "_objFlags": 0,
@@ -1810,28 +1785,28 @@
   {
     "__type__": "cc.SceneGlobals",
     "ambient": {
-      "__id__": 47
+      "__id__": 46
     },
     "shadows": {
-      "__id__": 48
+      "__id__": 47
     },
     "_skybox": {
-      "__id__": 49
+      "__id__": 48
     },
     "fog": {
-      "__id__": 50
+      "__id__": 49
     },
     "octree": {
-      "__id__": 51
+      "__id__": 50
     },
     "skin": {
-      "__id__": 52
+      "__id__": 51
     },
     "lightProbeInfo": {
-      "__id__": 53
+      "__id__": 52
     },
     "postSettings": {
-      "__id__": 54
+      "__id__": 53
     },
     "bakedWithStationaryMainLight": false,
     "bakedWithHighpLightmap": false

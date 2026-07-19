@@ -1,6 +1,6 @@
 import { _decorator, Button, Component } from 'cc';
-import { SceneManager } from 'db://assets/scripts/framework/scene-manager';
 import { LiveSessionParams } from 'db://assets/bundles/livestream/live-params';
+import { SceneManager } from 'db://assets/scripts/framework/scene-manager';
 import { UserSession } from 'db://assets/scripts/models/user';
 import { LobbyUI } from './lobby-ui';
 const { ccclass, property } = _decorator;
@@ -59,10 +59,10 @@ export class LobbyController extends Component {
             return;
         }
 
-        LiveSessionParams.roomName = searchVal;
+        LiveSessionParams.roomId = searchVal;
 
         try {
-            await SceneManager.loadBundle('livestream', 'Livestream');
+            await SceneManager.loadBundle('baccarat', 'Baccarat');
         } catch (error) {
             console.error('[LobbyController] Failed load Scene', error);
         }
