@@ -44,17 +44,15 @@ export class LiveChatManager extends Component {
     }
 
     private registerHandler(room: Room) {
-        room.registerByteStreamHandler(
+        room.registerTextStreamHandler(
             CHAT_TOPIC,
             async (reader, participantInfo) => {
                 try {
                     const text = await reader.readAll();
 
-                    console.log({ text });
-
                     const msg: ChatMessage = {
                         id: reader.info.id,
-                        text: text.join(''),
+                        text,
                         senderIdentity: participantInfo.identity,
                         timestamp: reader.info.timestamp,
                         isMine:
@@ -62,7 +60,7 @@ export class LiveChatManager extends Component {
                             room.localParticipant.identity,
                     };
 
-                    this.onMessage(msg);
+                    this.onMessage?.(msg);
                 } catch (error) {
                     console.error(
                         '[LiveChatManager] Read message error:',
@@ -76,7 +74,7 @@ export class LiveChatManager extends Component {
     }
 
     public async sendMessage(text: string): Promise<void> {
-        const room = this.stream.room;
+        const room = this.stream?.room;
 
         if (!room) {
             console.warn('[LiveChatManager] Missing LiveKitStreamManager');
@@ -94,6 +92,16 @@ export class LiveChatManager extends Component {
             await room.localParticipant.sendText(trimmed, {
                 topic: CHAT_TOPIC,
             });
+
+            const msg: ChatMessage = {
+                id: `local-${Date.now()}`,
+                text: trimmed,
+                senderIdentity: room.localParticipant.identity,
+                timestamp: Date.now(),
+                isMine: true,
+            };
+
+            this.onMessage?.(msg);
         } catch (error) {
             console.error('[LiveKitChatManager] Gửi chat thất bại:', error);
         }
