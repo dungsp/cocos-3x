@@ -6,11 +6,7 @@ export interface User {
 
 export class UserSession {
     private static _token: string | null = '123213123';
-    private static _user: User | null = {
-        isHost: true,
-        userId: '123213',
-        username: '21dasd',
-    };
+    private static _user: User | null = null;
 
     static setToken(token: string) {
         this._token = token;
