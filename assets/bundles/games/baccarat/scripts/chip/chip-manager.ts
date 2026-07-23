@@ -15,8 +15,8 @@ import { ChipItem } from './chip-item';
 
 const { ccclass, property } = _decorator;
 
-@ccclass('ChipSelector')
-export class ChipSelector extends Component {
+@ccclass('ChipManager')
+export class ChipManager extends Component {
     @property(ScrollView) scrollView: ScrollView | null = null;
 
     // content node của ScrollView, nên gắn sẵn component Layout (Horizontal) trong editor
